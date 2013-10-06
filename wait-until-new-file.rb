@@ -22,7 +22,7 @@ def wait_file_and_rename_to(new_name, options={directory: '.'}, &block)
     block.yield if (block)
   end
 
-  FileUtils.mv("#{directory}/#{filename}", "#{directory}/#{new_name}")
+  FileUtils.mv(File.join(directory, filename), File.join(directory, new_name))
 end
 
 # Example:
