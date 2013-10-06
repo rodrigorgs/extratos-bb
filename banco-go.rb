@@ -31,10 +31,9 @@ BB_MESES = {
 class BancoBrasil
   attr_reader :agencia, :conta, :download_directory, :browser
 
-  def initialize(agencia, conta, senha, download_directory="#{Dir.pwd}/downloads", browser=nil)
+  def initialize(agencia, conta, download_directory="#{Dir.pwd}/downloads", browser=nil)
     @agencia = agencia
     @conta = conta.upcase
-    @senha = senha
     @download_directory = download_directory
 
     FileUtils.mkdir(@download_directory) unless File.exist?(@download_directory)
@@ -53,7 +52,10 @@ class BancoBrasil
   end
 
   def rename_downloaded_file_to(filename, &block)
-    wait_file_and_rename_to("#{@agencia}__#{@conta}__#{filename}", directory: @download_directory, &block)
+    path = File.join(@download_directory, "#{@agencia}__#{@conta}__#{filename}")
+    if !File.exist?(path)
+      wait_file_and_rename_to("#{@agencia}__#{@conta}__#{filename}", directory: @download_directory, &block)
+    end
   end
 
   def renomeia_mes_para_aba(mes)
@@ -61,14 +63,14 @@ class BancoBrasil
     return "#{BB_MESES[mes[5..6]]}/#{mes[2..3]}"
   end
 
-  def entra
+  def entra(senha)
     @browser.goto 'http://www.bb.com.br'
     @browser.text_field(name: 'dependenciaOrigem').set @agencia
     @browser.text_field(name: 'numeroContratoOrigem').set @conta
     @browser.a(title: 'Entrar').click
 
     @browser.text_field(name: 'senhaConta').wait_until_present
-    @browser.text_field(name: 'senhaConta').set @senha
+    @browser.text_field(name: 'senhaConta').set senha
     @browser.button(id: 'botaoEntrar').click
   end
 
@@ -163,8 +165,8 @@ if __FILE__ == $0
   print "Mes (ex.: 2013-09): "
   mes = gets.strip
 
-  @bb = BancoBrasil.new(@agencia, @conta, @senha)
-  @bb.entra
+  @bb = BancoBrasil.new(@agencia, @conta)
+  @bb.entra(@senha)
   @bb.salva_tudo mes
   @bb.sai
 end
